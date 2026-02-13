@@ -1,8 +1,8 @@
 import { useResume, ResumeTemplate } from "@/hooks/useResume";
-import { Mail, Phone, MapPin, Github, Linkedin } from "lucide-react";
+import { Mail, Phone, MapPin, Github, Linkedin, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getAllSkills } from "@/lib/resumeToText";
 
-/* Template style configs — layout only, no color */
 const templateStyles: Record<ResumeTemplate, {
   wrapper: string;
   headerLayout: string;
@@ -42,10 +42,11 @@ export function ResumePreviewPanel() {
   const { personal, summary, education, experience, projects, skills, links } = resume;
   const styles = templateStyles[template];
 
-  const skillList = skills.split(",").map((s) => s.trim()).filter(Boolean);
+  const allSkills = getAllSkills(skills);
+  const hasSkillContent = allSkills.length > 0;
 
   const hasContent =
-    personal.name || summary || education.length > 0 || experience.length > 0 || projects.length > 0 || skillList.length > 0;
+    personal.name || summary || education.length > 0 || experience.length > 0 || projects.length > 0 || hasSkillContent;
 
   if (!hasContent) {
     return (
@@ -141,13 +142,23 @@ export function ResumePreviewPanel() {
           <h2 className={styles.sectionTitle}>Projects</h2>
           <div className="space-y-3">
             {projects.map((proj) => (
-              <div key={proj.id}>
+              <div key={proj.id} className="rounded border border-border p-3">
                 <div className="flex items-baseline justify-between">
                   <span className="text-sm font-semibold">{proj.title}</span>
-                  {proj.techStack && <span className="text-xs text-muted-foreground ml-2">{proj.techStack}</span>}
+                  <div className="flex items-center gap-2 ml-2">
+                    {proj.liveUrl && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                    {proj.githubUrl && <Github className="h-3 w-3 text-muted-foreground" />}
+                  </div>
                 </div>
                 {proj.description && (
                   <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{proj.description}</p>
+                )}
+                {proj.techStack.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {proj.techStack.map((tech, i) => (
+                      <span key={i} className={styles.skillStyle}>{tech}</span>
+                    ))}
+                  </div>
                 )}
               </div>
             ))}
@@ -155,17 +166,46 @@ export function ResumePreviewPanel() {
         </div>
       )}
 
-      {/* Skills */}
-      {skillList.length > 0 && (
+      {/* Skills — grouped */}
+      {hasSkillContent && (
         <div>
           <h2 className={styles.sectionTitle}>Skills</h2>
-          <div className="flex flex-wrap gap-1.5">
-            {template === "minimal" ? (
-              <p className="text-xs text-foreground">{skillList.join(" · ")}</p>
-            ) : (
-              skillList.map((skill, i) => (
-                <span key={i} className={styles.skillStyle}>{skill}</span>
-              ))
+          <div className="space-y-2">
+            {skills.technical.length > 0 && (
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Technical</span>
+                <div className="flex flex-wrap gap-1.5 mt-0.5">
+                  {template === "minimal" ? (
+                    <p className="text-xs text-foreground">{skills.technical.join(" · ")}</p>
+                  ) : (
+                    skills.technical.map((skill, i) => <span key={i} className={styles.skillStyle}>{skill}</span>)
+                  )}
+                </div>
+              </div>
+            )}
+            {skills.soft.length > 0 && (
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Soft Skills</span>
+                <div className="flex flex-wrap gap-1.5 mt-0.5">
+                  {template === "minimal" ? (
+                    <p className="text-xs text-foreground">{skills.soft.join(" · ")}</p>
+                  ) : (
+                    skills.soft.map((skill, i) => <span key={i} className={styles.skillStyle}>{skill}</span>)
+                  )}
+                </div>
+              </div>
+            )}
+            {skills.tools.length > 0 && (
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tools & Technologies</span>
+                <div className="flex flex-wrap gap-1.5 mt-0.5">
+                  {template === "minimal" ? (
+                    <p className="text-xs text-foreground">{skills.tools.join(" · ")}</p>
+                  ) : (
+                    skills.tools.map((skill, i) => <span key={i} className={styles.skillStyle}>{skill}</span>)
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>

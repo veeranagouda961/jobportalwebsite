@@ -27,7 +27,15 @@ export interface Project {
   id: string;
   title: string;
   description: string;
-  techStack: string;
+  techStack: string[];
+  liveUrl: string;
+  githubUrl: string;
+}
+
+export interface CategorizedSkills {
+  technical: string[];
+  soft: string[];
+  tools: string[];
 }
 
 export interface ResumeLinks {
@@ -41,7 +49,7 @@ export interface ResumeData {
   education: Education[];
   experience: Experience[];
   projects: Project[];
-  skills: string;
+  skills: CategorizedSkills;
   links: ResumeLinks;
 }
 
@@ -51,7 +59,7 @@ export const emptyResume: ResumeData = {
   education: [],
   experience: [],
   projects: [],
-  skills: "",
+  skills: { technical: [], soft: [], tools: [] },
   links: { github: "", linkedin: "" },
 };
 
@@ -100,17 +108,25 @@ export const sampleResume: ResumeData = {
       title: "DevConnect — Developer Social Platform",
       description:
         "A full-stack social platform for developers with real-time chat, project showcasing, and skill-based matching.",
-      techStack: "React, Node.js, PostgreSQL, Socket.io",
+      techStack: ["React", "Node.js", "PostgreSQL", "Socket.io"],
+      liveUrl: "https://devconnect.app",
+      githubUrl: "https://github.com/arjunmehta/devconnect",
     },
     {
       id: "proj-2",
       title: "SmartExpense Tracker",
       description:
         "AI-powered expense categorization app with budget forecasting and receipt scanning via OCR.",
-      techStack: "React Native, Python, TensorFlow Lite",
+      techStack: ["React Native", "Python", "TensorFlow Lite"],
+      liveUrl: "",
+      githubUrl: "https://github.com/arjunmehta/smartexpense",
     },
   ],
-  skills: "React, TypeScript, Node.js, Python, PostgreSQL, Docker, AWS, Git, REST APIs, GraphQL",
+  skills: {
+    technical: ["React", "TypeScript", "Node.js", "Python", "PostgreSQL", "GraphQL"],
+    soft: ["Team Leadership", "Problem Solving", "Communication"],
+    tools: ["Docker", "AWS", "Git", "REST APIs"],
+  },
   links: {
     github: "https://github.com/arjunmehta",
     linkedin: "https://linkedin.com/in/arjunmehta",
@@ -119,10 +135,38 @@ export const sampleResume: ResumeData = {
 
 const STORAGE_KEY = "rb_resume_data";
 
+/** Migrate old flat skills string to categorized format */
+function migrateResume(data: any): ResumeData {
+  // Migrate skills from comma-separated string to categorized
+  if (typeof data.skills === "string") {
+    const items = data.skills.split(",").map((s: string) => s.trim()).filter(Boolean);
+    data.skills = { technical: items, soft: [], tools: [] };
+  }
+  // Ensure skills has all categories
+  if (data.skills && typeof data.skills === "object") {
+    if (!Array.isArray(data.skills.technical)) data.skills.technical = [];
+    if (!Array.isArray(data.skills.soft)) data.skills.soft = [];
+    if (!Array.isArray(data.skills.tools)) data.skills.tools = [];
+  }
+  // Migrate projects: techStack string → array, add missing URLs
+  if (Array.isArray(data.projects)) {
+    data.projects = data.projects.map((p: any) => ({
+      ...p,
+      techStack: typeof p.techStack === "string"
+        ? p.techStack.split(",").map((s: string) => s.trim()).filter(Boolean)
+        : (Array.isArray(p.techStack) ? p.techStack : []),
+      liveUrl: p.liveUrl ?? "",
+      githubUrl: p.githubUrl ?? "",
+    }));
+  }
+  return data as ResumeData;
+}
+
 export function loadResumeData(): ResumeData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : emptyResume;
+    if (!raw) return emptyResume;
+    return migrateResume(JSON.parse(raw));
   } catch {
     return emptyResume;
   }
