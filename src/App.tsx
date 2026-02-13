@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RBBuildLayout } from "@/components/layout/RBBuildLayout";
+import { ResumeBuilderLayout } from "@/components/layout/ResumeBuilderLayout";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Practice from "./pages/Practice";
@@ -15,6 +16,10 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import RBStepPage from "./pages/rb/RBStepPage";
 import RBProof from "./pages/rb/RBProof";
+import ResumeHome from "./pages/resume/ResumeHome";
+import Builder from "./pages/resume/Builder";
+import Preview from "./pages/resume/Preview";
+import ResumeProof from "./pages/resume/ResumeProof";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +49,12 @@ const App = () => (
             <Route path="/rb/07-test" element={<RBStepPage stepNumber={7} />} />
             <Route path="/rb/08-ship" element={<RBStepPage stepNumber={8} />} />
             <Route path="/rb/proof" element={<RBProof />} />
+          </Route>
+          <Route element={<ResumeBuilderLayout />}>
+            <Route path="/resume" element={<ResumeHome />} />
+            <Route path="/builder" element={<Builder />} />
+            <Route path="/preview" element={<Preview />} />
+            <Route path="/resume/proof" element={<ResumeProof />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
