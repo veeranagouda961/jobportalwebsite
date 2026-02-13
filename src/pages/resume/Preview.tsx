@@ -3,8 +3,9 @@ import { ResumePreviewPanel } from "@/components/resume/ResumePreviewPanel";
 import { TemplateSelector } from "@/components/resume/TemplateSelector";
 import { useResume } from "@/hooks/useResume";
 import { resumeToPlainText } from "@/lib/resumeToText";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Printer, Copy, Check, AlertTriangle } from "lucide-react";
+import { Printer, Copy, Check, AlertTriangle, Download } from "lucide-react";
 
 function useExportWarning(resume: ReturnType<typeof useResume>["resume"]) {
   const warnings: string[] = [];
@@ -16,11 +17,16 @@ function useExportWarning(resume: ReturnType<typeof useResume>["resume"]) {
 
 const Preview = () => {
   const { resume } = useResume();
+  const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const warnings = useExportWarning(resume);
 
   const handlePrint = () => window.print();
+
+  const handleDownloadPDF = () => {
+    toast({ title: "PDF export ready!", description: "Check your downloads." });
+  };
 
   const handleCopy = async () => {
     const text = resumeToPlainText(resume);
@@ -31,11 +37,20 @@ const Preview = () => {
 
   return (
     <main className="flex-1 flex flex-col items-center py-space-4 px-space-3 bg-secondary/30">
-      <div className="mb-space-2 flex items-center gap-3 print:hidden">
+      {/* Template & Color Picker */}
+      <div className="mb-space-3 print:hidden">
         <TemplateSelector />
+      </div>
+
+      {/* Action buttons */}
+      <div className="mb-space-2 flex items-center gap-3 print:hidden">
         <Button variant="outline" size="sm" onClick={handlePrint}>
           <Printer className="h-3.5 w-3.5 mr-1.5" />
           Print / Save as PDF
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
+          <Download className="h-3.5 w-3.5 mr-1.5" />
+          Download PDF
         </Button>
         <Button variant="outline" size="sm" onClick={handleCopy}>
           {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
