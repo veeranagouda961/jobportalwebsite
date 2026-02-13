@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { RBBuildLayout } from "@/components/layout/RBBuildLayout";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Practice from "./pages/Practice";
@@ -12,6 +13,8 @@ import Resources from "./pages/Resources";
 import Results from "./pages/Results";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import RBStepPage from "./pages/rb/RBStepPage";
+import RBProof from "./pages/rb/RBProof";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +33,17 @@ const App = () => (
             <Route path="/resources" element={<Resources />} />
             <Route path="/results" element={<Results />} />
             <Route path="/profile" element={<Profile />} />
+          </Route>
+          <Route element={<RBBuildLayout />}>
+            <Route path="/rb/01-problem" element={<RBStepPage stepNumber={1} />} />
+            <Route path="/rb/02-market" element={<RBStepPage stepNumber={2} />} />
+            <Route path="/rb/03-architecture" element={<RBStepPage stepNumber={3} />} />
+            <Route path="/rb/04-hld" element={<RBStepPage stepNumber={4} />} />
+            <Route path="/rb/05-lld" element={<RBStepPage stepNumber={5} />} />
+            <Route path="/rb/06-build" element={<RBStepPage stepNumber={6} />} />
+            <Route path="/rb/07-test" element={<RBStepPage stepNumber={7} />} />
+            <Route path="/rb/08-ship" element={<RBStepPage stepNumber={8} />} />
+            <Route path="/rb/proof" element={<RBProof />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
