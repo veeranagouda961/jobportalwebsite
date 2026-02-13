@@ -71,7 +71,7 @@ export const sampleResume: ResumeData = {
     location: "Bangalore, India",
   },
   summary:
-    "Full-stack developer with 2+ years of experience building scalable web applications. Proficient in React, Node.js, and cloud infrastructure. Passionate about clean code and user-centric design.",
+    "Built and designed scalable web applications over 2+ years as a full-stack developer. Improved system performance using React, Node.js, and cloud infrastructure. Led multiple feature launches with a focus on clean code and user-centric design.",
   education: [
     {
       id: "edu-1",
