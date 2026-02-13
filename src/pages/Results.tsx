@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getAnalysisById, updateAnalysis, type AnalysisResult } from "@/lib/jdAnalyzer";
 import {
   ArrowLeft, CheckCircle2, BookOpen, CalendarDays, HelpCircle,
-  Copy, Download, Zap, Check, XCircle,
+  Copy, Download, Zap, Check, XCircle, Building2, Info,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -211,6 +211,61 @@ const Results = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Company Intel */}
+      {result.companyIntel && (
+        <Card className="mt-space-2">
+          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" /> Company Intel</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-2 mb-space-2">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Company</p>
+                <p className="font-medium text-foreground">{result.companyIntel.name}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Industry</p>
+                <p className="text-sm text-foreground">{result.companyIntel.industry}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Estimated Size</p>
+                <Badge variant="outline">{result.companyIntel.size}</Badge>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Typical Hiring Focus</p>
+              <p className="text-sm text-muted-foreground">{result.companyIntel.hiringFocus}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Round Mapping */}
+      {result.roundMapping && result.roundMapping.length > 0 && (
+        <Card className="mt-space-2">
+          <CardHeader><CardTitle className="text-lg flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" /> Expected Round Flow</CardTitle></CardHeader>
+          <CardContent>
+            <div className="relative pl-6">
+              {result.roundMapping.map((rm, i) => (
+                <div key={i} className="relative pb-space-3 last:pb-0">
+                  {i < result.roundMapping!.length - 1 && (
+                    <span className="absolute left-[-17px] top-6 w-px h-[calc(100%-8px)] bg-border" />
+                  )}
+                  <span className="absolute left-[-22px] top-1 h-3 w-3 rounded-full bg-primary ring-4 ring-background" />
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{rm.round}</p>
+                  <p className="font-medium text-foreground mt-0.5">{rm.title}</p>
+                  <p className="text-sm text-muted-foreground mt-1 flex items-start gap-1.5">
+                    <Info className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary/60" />
+                    {rm.why}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-space-2 text-xs text-muted-foreground italic flex items-center gap-1">
+              <Info className="h-3 w-3" /> Demo Mode: Company intel generated heuristically.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Checklist */}
       <Card className="mt-space-2">
