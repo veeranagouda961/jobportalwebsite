@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Practice from "./pages/Practice";
 import Assessments from "./pages/Assessments";
 import Resources from "./pages/Resources";
+import Results from "./pages/Results";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/practice" element={<Practice />} />
             <Route path="/assessments" element={<Assessments />} />
             <Route path="/resources" element={<Resources />} />
+            <Route path="/results" element={<Results />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<NotFound />} />
