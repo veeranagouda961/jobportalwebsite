@@ -5,20 +5,30 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, Database } from "lucide-react";
+import { Plus, Trash2, Database, ChevronDown, ChevronRight, Sparkles, ExternalLink, Github } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResumePreviewPanel } from "@/components/resume/ResumePreviewPanel";
 import { ATSScorePanel } from "@/components/resume/ATSScorePanel";
 import { TemplateSelector } from "@/components/resume/TemplateSelector";
 import { BulletHints } from "@/components/resume/BulletHints";
+import { TagInput } from "@/components/resume/TagInput";
+import { useState } from "react";
 
 function genId() {
   return Math.random().toString(36).slice(2, 9);
 }
 
+const SUGGESTED_SKILLS = {
+  technical: ["TypeScript", "React", "Node.js", "PostgreSQL", "GraphQL"],
+  soft: ["Team Leadership", "Problem Solving"],
+  tools: ["Git", "Docker", "AWS"],
+};
+
 const Builder = () => {
   const { resume, updateResume, setResume } = useResume();
   const { toast } = useToast();
+  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(new Set());
+  const [suggestingSkills, setSuggestingSkills] = useState(false);
 
   const loadSample = () => {
     setResume(sampleResume);
@@ -58,13 +68,17 @@ const Builder = () => {
   const removeExperience = (id: string) =>
     updateResume((r) => ({ ...r, experience: r.experience.filter((e) => e.id !== id) }));
 
-  const addProject = () =>
+  const addProject = () => {
+    const id = genId();
     updateResume((r) => ({
       ...r,
-      projects: [...r.projects, { id: genId(), title: "", description: "", techStack: "" }],
+      projects: [...r.projects, { id, title: "", description: "", techStack: [], liveUrl: "", githubUrl: "" }],
     }));
+    // auto-expand new project
+    setCollapsedProjects((prev) => { const next = new Set(prev); next.delete(id); return next; });
+  };
 
-  const updateProject = (id: string, key: keyof Project, value: string) =>
+  const updateProject = <K extends keyof Project>(id: string, key: K, value: Project[K]) =>
     updateResume((r) => ({
       ...r,
       projects: r.projects.map((p) => (p.id === id ? { ...p, [key]: value } : p)),
@@ -72,6 +86,34 @@ const Builder = () => {
 
   const removeProject = (id: string) =>
     updateResume((r) => ({ ...r, projects: r.projects.filter((p) => p.id !== id) }));
+
+  const toggleProjectCollapse = (id: string) =>
+    setCollapsedProjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+
+  const updateSkillCategory = (category: "technical" | "soft" | "tools", tags: string[]) =>
+    updateResume((r) => ({ ...r, skills: { ...r.skills, [category]: tags } }));
+
+  const suggestSkills = () => {
+    setSuggestingSkills(true);
+    setTimeout(() => {
+      updateResume((r) => ({
+        ...r,
+        skills: {
+          technical: [...new Set([...r.skills.technical, ...SUGGESTED_SKILLS.technical])],
+          soft: [...new Set([...r.skills.soft, ...SUGGESTED_SKILLS.soft])],
+          tools: [...new Set([...r.skills.tools, ...SUGGESTED_SKILLS.tools])],
+        },
+      }));
+      setSuggestingSkills(false);
+      toast({ title: "Skills suggested and added" });
+    }, 1000);
+  };
+
+  const totalSkills = resume.skills.technical.length + resume.skills.soft.length + resume.skills.tools.length;
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -218,47 +260,95 @@ const Builder = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-foreground">Projects</h2>
             <Button variant="ghost" size="sm" onClick={addProject}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> Add
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add Project
             </Button>
           </div>
           {resume.projects.length === 0 && (
             <p className="text-sm text-muted-foreground">No projects yet.</p>
           )}
-          {resume.projects.map((proj, i) => (
-            <div key={proj.id} className="space-y-space-1">
-              {i > 0 && <Separator />}
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground font-medium">Project {i + 1}</span>
-                <Button variant="ghost" size="sm" onClick={() => removeProject(proj.id)} className="text-destructive h-7 px-2">
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+          {resume.projects.map((proj, i) => {
+            const isCollapsed = collapsedProjects.has(proj.id);
+            return (
+              <div key={proj.id} className="space-y-space-1">
+                {i > 0 && <Separator />}
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => toggleProjectCollapse(proj.id)}
+                    className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors text-left"
+                  >
+                    {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    {proj.title || `Project ${i + 1}`}
+                  </button>
+                  <Button variant="ghost" size="sm" onClick={() => removeProject(proj.id)} className="text-destructive h-7 px-2">
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+                {!isCollapsed && (
+                  <div className="space-y-space-1 pl-5">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Title</Label>
+                      <Input value={proj.title} onChange={(e) => updateProject(proj.id, "title", e.target.value)} placeholder="Project name" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Description</Label>
+                      <Textarea
+                        value={proj.description}
+                        onChange={(e) => {
+                          if (e.target.value.length <= 200) updateProject(proj.id, "description", e.target.value);
+                        }}
+                        placeholder="What it does..."
+                        className="min-h-[60px] resize-y"
+                      />
+                      <div className="flex items-center justify-between">
+                        <BulletHints text={proj.description} />
+                        <span className="text-xs text-muted-foreground">{proj.description.length}/200</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Tech Stack</Label>
+                      <TagInput tags={proj.techStack} onChange={(tags) => updateProject(proj.id, "techStack", tags)} placeholder="Add technology..." />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-1">
+                      <div className="space-y-1">
+                        <Label className="text-xs flex items-center gap-1"><ExternalLink className="h-3 w-3" /> Live URL</Label>
+                        <Input value={proj.liveUrl} onChange={(e) => updateProject(proj.id, "liveUrl", e.target.value)} placeholder="https://..." />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs flex items-center gap-1"><Github className="h-3 w-3" /> GitHub URL</Label>
+                        <Input value={proj.githubUrl} onChange={(e) => updateProject(proj.id, "githubUrl", e.target.value)} placeholder="https://github.com/..." />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Title</Label>
-                <Input value={proj.title} onChange={(e) => updateProject(proj.id, "title", e.target.value)} placeholder="Project name" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Description</Label>
-                <Textarea value={proj.description} onChange={(e) => updateProject(proj.id, "description", e.target.value)} placeholder="What it does..." className="min-h-[60px] resize-y" />
-                <BulletHints text={proj.description} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Tech Stack</Label>
-                <Input value={proj.techStack} onChange={(e) => updateProject(proj.id, "techStack", e.target.value)} placeholder="React, Node.js, PostgreSQL" />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </section>
 
         {/* Skills */}
         <section className="rounded-lg border border-border bg-card p-space-3 space-y-space-2">
-          <h2 className="text-base font-semibold text-foreground">Skills</h2>
-          <Input
-            value={resume.skills}
-            onChange={(e) => updateResume((r) => ({ ...r, skills: e.target.value }))}
-            placeholder="React, TypeScript, Node.js, Python..."
-          />
-          <p className="text-xs text-muted-foreground">Comma-separated list</p>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-foreground">Skills ({totalSkills})</h2>
+            <Button variant="ghost" size="sm" onClick={suggestSkills} disabled={suggestingSkills}>
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              {suggestingSkills ? "Suggesting..." : "Suggest Skills"}
+            </Button>
+          </div>
+          <div className="space-y-space-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Technical Skills ({resume.skills.technical.length})</Label>
+              <TagInput tags={resume.skills.technical} onChange={(t) => updateSkillCategory("technical", t)} placeholder="e.g. React, TypeScript..." />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Soft Skills ({resume.skills.soft.length})</Label>
+              <TagInput tags={resume.skills.soft} onChange={(t) => updateSkillCategory("soft", t)} placeholder="e.g. Team Leadership..." />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Tools & Technologies ({resume.skills.tools.length})</Label>
+              <TagInput tags={resume.skills.tools} onChange={(t) => updateSkillCategory("tools", t)} placeholder="e.g. Git, Docker..." />
+            </div>
+          </div>
         </section>
 
         {/* Links */}

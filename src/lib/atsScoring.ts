@@ -1,4 +1,5 @@
 import { ResumeData } from "@/data/resumeTypes";
+import { getAllSkills } from "@/lib/resumeToText";
 
 export interface ATSResult {
   score: number;
@@ -22,7 +23,7 @@ export function computeATSScore(resume: ResumeData): ATSResult {
   if (summaryWords >= 40 && summaryWords <= 120) {
     score += 15;
   } else if (summaryWords > 0) {
-    score += 5; // partial credit
+    score += 5;
     if (summaryWords < 40) {
       suggestions.push("Write a stronger summary (target 40–120 words).");
     } else {
@@ -47,7 +48,7 @@ export function computeATSScore(resume: ResumeData): ATSResult {
   }
 
   // +10 if ≥8 skills
-  const skillList = resume.skills.split(",").map((s) => s.trim()).filter(Boolean);
+  const skillList = getAllSkills(resume.skills);
   if (skillList.length >= 8) {
     score += 10;
   } else {
@@ -84,7 +85,7 @@ export function computeATSScore(resume: ResumeData): ATSResult {
     suggestions.push("Add your education details.");
   }
 
-  // +20 bonus for having name + email + phone (basic completeness)
+  // +20 bonus for basic completeness
   let basicScore = 0;
   if (resume.personal.name) basicScore += 7;
   if (resume.personal.email) basicScore += 7;
