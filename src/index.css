@@ -132,3 +132,55 @@
     max-width: 720px;
   }
 }
+
+/* Print styles for resume export */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+    line-height: 1.4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide everything except the resume */
+  header, nav, footer,
+  .print\\:hidden,
+  [class*="print:hidden"] {
+    display: none !important;
+  }
+
+  #resume-print-area {
+    margin: 0;
+    padding: 0.5in 0.6in;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* Prevent section splitting */
+  #resume-print-area > div > div {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Clean margins */
+  @page {
+    margin: 0.4in;
+    size: letter;
+  }
+
+  /* Force black text */
+  #resume-print-area * {
+    color: black !important;
+  }
+
+  #resume-print-area h1,
+  #resume-print-area h2,
+  #resume-print-area h3 {
+    color: black !important;
+  }
+}
