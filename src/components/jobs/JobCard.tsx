@@ -2,9 +2,11 @@ import { ExternalLink, Bookmark, Eye, MapPin, Briefcase, Clock } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Job } from "@/data/jobs";
+import { getScoreTier, type ScoreTier } from "@/lib/matchScore";
 
 interface JobCardProps {
   job: Job;
+  matchScore?: number;
   isSaved: boolean;
   onToggleSave: (id: number) => void;
   onView: (job: Job) => void;
@@ -22,7 +24,16 @@ const sourceBg: Record<Job["source"], string> = {
   Indeed: "bg-muted text-foreground",
 };
 
-export function JobCard({ job, isSaved, onToggleSave, onView }: JobCardProps) {
+const tierStyles: Record<ScoreTier, string> = {
+  high: "bg-[hsl(140,30%,42%)] text-[hsl(40,18%,96%)]",
+  good: "bg-[hsl(40,60%,50%)] text-foreground",
+  neutral: "bg-muted text-foreground",
+  low: "bg-muted/60 text-muted-foreground",
+};
+
+export function JobCard({ job, matchScore, isSaved, onToggleSave, onView }: JobCardProps) {
+  const tier = matchScore !== undefined ? getScoreTier(matchScore) : null;
+
   return (
     <div className="rounded-lg border border-border bg-card p-space-3 transition-all duration-base ease-base hover:border-primary/30">
       {/* Header */}
@@ -31,9 +42,16 @@ export function JobCard({ job, isSaved, onToggleSave, onView }: JobCardProps) {
           <h3 className="font-serif text-lg leading-snug text-foreground">{job.title}</h3>
           <p className="mt-1 text-sm text-muted-foreground">{job.company}</p>
         </div>
-        <Badge className={sourceBg[job.source]} variant="secondary">
-          {job.source}
-        </Badge>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {tier !== null && (
+            <Badge className={tierStyles[tier]}>
+              {matchScore}%
+            </Badge>
+          )}
+          <Badge className={sourceBg[job.source]} variant="secondary">
+            {job.source}
+          </Badge>
+        </div>
       </div>
 
       {/* Meta */}
