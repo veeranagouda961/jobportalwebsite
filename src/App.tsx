@@ -3,13 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
-import Practice from "./pages/Practice";
-import Assessments from "./pages/Assessments";
-import Resources from "./pages/Resources";
-import Profile from "./pages/Profile";
+import Saved from "./pages/Saved";
+import Digest from "./pages/Digest";
+import Settings from "./pages/Settings";
+import Proof from "./pages/Proof";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,13 +21,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route element={<DashboardLayout />}>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/practice" element={<Practice />} />
-            <Route path="/assessments" element={<Assessments />} />
-            <Route path="/resources" element={<Resources />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/saved" element={<Saved />} />
+            <Route path="/digest" element={<Digest />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/proof" element={<Proof />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
