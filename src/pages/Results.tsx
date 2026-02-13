@@ -1,14 +1,19 @@
+import { useState, useMemo, useCallback } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getAnalysisById, type AnalysisResult } from "@/lib/jdAnalyzer";
-import { ArrowLeft, CheckCircle2, BookOpen, CalendarDays, HelpCircle } from "lucide-react";
+import { getAnalysisById, updateAnalysis, type AnalysisResult } from "@/lib/jdAnalyzer";
+import {
+  ArrowLeft, CheckCircle2, BookOpen, CalendarDays, HelpCircle,
+  Copy, Download, Zap, Check, XCircle,
+} from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 function ScoreCircle({ score }: { score: number }) {
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
+  const offset = circumference - (Math.max(0, Math.min(100, score)) / 100) * circumference;
 
   return (
     <div className="flex flex-col items-center gap-space-1">
@@ -30,10 +35,98 @@ function ScoreCircle({ score }: { score: number }) {
   );
 }
 
+function copyToClipboard(text: string, label: string) {
+  navigator.clipboard.writeText(text).then(() => {
+    toast({ title: "Copied!", description: `${label} copied to clipboard.` });
+  });
+}
+
+function formatPlanText(result: AnalysisResult): string {
+  return result.plan.map(d => `${d.day} — ${d.focus}\n${d.tasks.map(t => `  • ${t}`).join("\n")}`).join("\n\n");
+}
+
+function formatChecklistText(result: AnalysisResult): string {
+  return result.checklist.map(r => `${r.title}\n${r.items.map(i => `  ☐ ${i}`).join("\n")}`).join("\n\n");
+}
+
+function formatQuestionsText(result: AnalysisResult): string {
+  return result.questions.map((q, i) => `${i + 1}. ${q}`).join("\n");
+}
+
+function formatFullTxt(result: AnalysisResult): string {
+  const lines: string[] = [];
+  lines.push(`=== Analysis Results ===`);
+  if (result.company) lines.push(`Company: ${result.company}`);
+  if (result.role) lines.push(`Role: ${result.role}`);
+  lines.push(`Readiness Score: ${result.readinessScore}/100`);
+  lines.push("");
+  lines.push("--- Key Skills ---");
+  Object.entries(result.extractedSkills).forEach(([cat, skills]) => {
+    lines.push(`${cat}: ${skills.join(", ")}`);
+  });
+  lines.push("");
+  lines.push("--- 7-Day Plan ---");
+  lines.push(formatPlanText(result));
+  lines.push("");
+  lines.push("--- Round Checklist ---");
+  lines.push(formatChecklistText(result));
+  lines.push("");
+  lines.push("--- Interview Questions ---");
+  lines.push(formatQuestionsText(result));
+  return lines.join("\n");
+}
+
 const Results = () => {
   const [params] = useSearchParams();
   const id = params.get("id");
-  const result: AnalysisResult | undefined = id ? getAnalysisById(id) : undefined;
+  const [result, setResult] = useState<AnalysisResult | undefined>(() =>
+    id ? getAnalysisById(id) : undefined
+  );
+
+  const allSkills = useMemo(() => {
+    if (!result) return [];
+    return Object.values(result.extractedSkills).flat();
+  }, [result]);
+
+  const confidenceMap = result?.skillConfidenceMap ?? {};
+
+  const liveScore = useMemo(() => {
+    if (!result) return 0;
+    let score = result.readinessScore;
+    for (const skill of allSkills) {
+      const status = confidenceMap[skill];
+      if (status === "know") score += 2;
+      else score -= 2; // default is "practice"
+    }
+    return Math.max(0, Math.min(100, score));
+  }, [result, allSkills, confidenceMap]);
+
+  const weakSkills = useMemo(() => {
+    return allSkills.filter(s => (confidenceMap[s] ?? "practice") === "practice").slice(0, 3);
+  }, [allSkills, confidenceMap]);
+
+  const toggleSkill = useCallback((skill: string) => {
+    if (!result) return;
+    const current = confidenceMap[skill] ?? "practice";
+    const next = current === "know" ? "practice" : "know";
+    const updated: AnalysisResult = {
+      ...result,
+      skillConfidenceMap: { ...confidenceMap, [skill]: next },
+    };
+    setResult(updated);
+    updateAnalysis(updated);
+  }, [result, confidenceMap]);
+
+  const downloadTxt = useCallback(() => {
+    if (!result) return;
+    const blob = new Blob([formatFullTxt(result)], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `analysis-${result.company || "report"}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [result]);
 
   if (!result) {
     return (
@@ -62,14 +155,30 @@ const Results = () => {
         {!result.company && !result.role && "General analysis"}
       </p>
 
+      {/* Export toolbar */}
+      <div className="mt-space-2 flex flex-wrap gap-2">
+        <Button variant="secondary" size="sm" onClick={() => copyToClipboard(formatPlanText(result), "7-day plan")}>
+          <Copy className="h-3.5 w-3.5" /> Copy 7-day plan
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => copyToClipboard(formatChecklistText(result), "Round checklist")}>
+          <Copy className="h-3.5 w-3.5" /> Copy round checklist
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => copyToClipboard(formatQuestionsText(result), "10 questions")}>
+          <Copy className="h-3.5 w-3.5" /> Copy 10 questions
+        </Button>
+        <Button variant="outline" size="sm" onClick={downloadTxt}>
+          <Download className="h-3.5 w-3.5" /> Download as TXT
+        </Button>
+      </div>
+
       <div className="mt-space-3 grid grid-cols-1 lg:grid-cols-3 gap-space-2">
         {/* Score */}
         <Card>
           <CardHeader><CardTitle className="text-lg">Readiness Score</CardTitle></CardHeader>
-          <CardContent className="flex justify-center"><ScoreCircle score={result.readinessScore} /></CardContent>
+          <CardContent className="flex justify-center"><ScoreCircle score={liveScore} /></CardContent>
         </Card>
 
-        {/* Skills */}
+        {/* Skills with toggles */}
         <Card className="lg:col-span-2">
           <CardHeader><CardTitle className="text-lg flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Key Skills Extracted</CardTitle></CardHeader>
           <CardContent className="space-y-space-2">
@@ -77,9 +186,25 @@ const Results = () => {
               <div key={category}>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">{category}</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {skills.map((s) => (
-                    <Badge key={s} variant="secondary">{s}</Badge>
-                  ))}
+                  {skills.map((s) => {
+                    const status = confidenceMap[s] ?? "practice";
+                    const isKnow = status === "know";
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => toggleSkill(s)}
+                        className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer ${
+                          isKnow
+                            ? "border-primary/30 bg-primary/10 text-primary"
+                            : "border-border bg-secondary text-muted-foreground"
+                        }`}
+                      >
+                        {isKnow ? <Check className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                        {s}
+                        <span className="text-[10px] opacity-70">{isKnow ? "I know" : "Need practice"}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -143,6 +268,26 @@ const Results = () => {
               </li>
             ))}
           </ol>
+        </CardContent>
+      </Card>
+
+      {/* Action Next box */}
+      <Card className="mt-space-2 border-primary/20 bg-primary/5">
+        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Zap className="h-4 w-4 text-primary" /> Action Next</CardTitle></CardHeader>
+        <CardContent>
+          {weakSkills.length > 0 ? (
+            <>
+              <p className="text-sm text-muted-foreground mb-2">Your top areas to focus on:</p>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {weakSkills.map(s => (
+                  <Badge key={s} variant="secondary" className="border-destructive/20 text-destructive">{s}</Badge>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground mb-3">Great — you're confident across all skills!</p>
+          )}
+          <p className="text-sm font-medium text-foreground">👉 Start Day 1 plan now.</p>
         </CardContent>
       </Card>
     </div>

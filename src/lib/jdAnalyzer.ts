@@ -29,6 +29,7 @@ export interface AnalysisResult {
   checklist: ChecklistRound[];
   questions: string[];
   readinessScore: number;
+  skillConfidenceMap?: Record<string, "know" | "practice">;
 }
 
 const SKILL_CATEGORIES: SkillCategory[] = [
@@ -387,4 +388,13 @@ export function getHistory(): AnalysisResult[] {
 
 export function getAnalysisById(id: string): AnalysisResult | undefined {
   return getHistory().find(h => h.id === id);
+}
+
+export function updateAnalysis(updated: AnalysisResult): void {
+  const history = getHistory();
+  const idx = history.findIndex(h => h.id === updated.id);
+  if (idx !== -1) {
+    history[idx] = updated;
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }
 }
