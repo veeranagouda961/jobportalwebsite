@@ -21,9 +21,10 @@ export interface Filters {
 interface Props {
   filters: Filters;
   onChange: (f: Filters) => void;
+  hasPreferences?: boolean;
 }
 
-export function FilterBar({ filters, onChange }: Props) {
+export function FilterBar({ filters, onChange, hasPreferences }: Props) {
   const set = (key: keyof Filters, value: string) =>
     onChange({ ...filters, [key]: value });
 
@@ -88,13 +89,15 @@ export function FilterBar({ filters, onChange }: Props) {
       </Select>
 
       <Select value={filters.sort} onValueChange={(v) => set("sort", v)}>
-        <SelectTrigger className="w-[130px]">
+        <SelectTrigger className="w-[150px]">
           <SelectValue placeholder="Sort" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="latest">Latest</SelectItem>
           <SelectItem value="oldest">Oldest</SelectItem>
           <SelectItem value="company">Company A–Z</SelectItem>
+          {hasPreferences && <SelectItem value="matchScore">Match Score</SelectItem>}
+          <SelectItem value="salary">Salary</SelectItem>
         </SelectContent>
       </Select>
     </div>
