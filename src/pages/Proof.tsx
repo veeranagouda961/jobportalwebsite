@@ -12,8 +12,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { useToast } from "@/hooks/use-toast";
 
 /* ─── localStorage keys ─── */
-const CHECKLIST_KEY = "jobTrackerTestChecklist";
-const LINKS_KEY = "jobTrackerSubmissionLinks";
+const CHECKLIST_KEY = "prpTestChecklist";
+const LINKS_KEY = "prp_final_submission";
 
 /* ─── Test checklist items ─── */
 interface TestItem {
@@ -38,12 +38,12 @@ const testItems: TestItem[] = [
 /* ─── Step definitions ─── */
 const steps = [
   "Project Setup",
-  "Job Data Layer",
-  "Dashboard & Filters",
-  "Preferences & Match Scoring",
-  "Save & Apply Flow",
-  "Status Tracking",
-  "Daily Digest Engine",
+  "JD Analyzer UI",
+  "Skill Extraction Engine",
+  "Readiness Scoring",
+  "Interactive Skill Assessment",
+  "Company Intel + Round Mapping",
+  "Export & History Persistence",
   "Test Checklist & Proof",
 ];
 
@@ -126,7 +126,7 @@ const Proof = () => {
   const updateLink = (key: keyof ArtifactLinks, value: string) =>
     setLinks((prev) => ({ ...prev, [key]: value }));
 
-  const submissionText = `Job Notification Tracker — Final Submission
+  const submissionText = `Placement Readiness Platform — Final Submission
 
 Lovable Project:
 ${links.lovable || "(not provided)"}
@@ -137,11 +137,12 @@ ${links.github || "(not provided)"}
 Live Deployment:
 ${links.deployed || "(not provided)"}
 
-Core Features:
-- Intelligent match scoring
-- Daily digest simulation
-- Status tracking
-- Test checklist enforced`;
+Core Capabilities:
+- JD skill extraction (deterministic)
+- Round mapping engine
+- 7-day prep plan
+- Interactive readiness scoring
+- History persistence`;
 
   const copySubmission = useCallback(() => {
     navigator.clipboard.writeText(submissionText).then(() => {
@@ -168,11 +169,11 @@ Core Features:
         {/* ─── Header ─── */}
         <div className="text-center">
           <ClipboardCheck className="mx-auto h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />
-          <h1 className="mt-space-2 text-3xl md:text-4xl font-serif text-foreground">
-            Project 1 — Final Proof
+           <h1 className="mt-space-2 text-3xl md:text-4xl font-serif text-foreground">
+            Placement Readiness — Final Proof
           </h1>
           <p className="mt-space-1 text-base text-muted-foreground">
-            Job Notification Tracker
+            Placement Readiness Platform
           </p>
           <Badge
             variant="outline"
@@ -318,9 +319,14 @@ Core Features:
 
         {/* ─── Ship confirmation ─── */}
         {shipStatus === "Shipped" && (
-          <div className="text-center py-space-3">
-            <p className="text-sm font-medium text-[hsl(140,30%,42%)]">
-              Project 1 Shipped Successfully.
+          <div className="text-center py-space-4 space-y-2">
+            <p className="text-base font-serif text-[hsl(140,30%,42%)]">
+              You built a real product.
+            </p>
+            <p className="text-sm text-muted-foreground italic leading-relaxed max-w-md mx-auto">
+              Not a tutorial. Not a clone.<br />
+              A structured tool that solves a real problem.<br />
+              This is your proof of work.
             </p>
           </div>
         )}
