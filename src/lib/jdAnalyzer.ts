@@ -18,6 +18,21 @@ export interface DayPlan {
   tasks: string[];
 }
 
+export type CompanySize = "Startup" | "Mid-size" | "Enterprise";
+
+export interface CompanyIntel {
+  name: string;
+  industry: string;
+  size: CompanySize;
+  hiringFocus: string;
+}
+
+export interface RoundMapping {
+  round: string;
+  title: string;
+  why: string;
+}
+
 export interface AnalysisResult {
   id: string;
   createdAt: string;
@@ -30,6 +45,8 @@ export interface AnalysisResult {
   questions: string[];
   readinessScore: number;
   skillConfidenceMap?: Record<string, "know" | "practice">;
+  companyIntel?: CompanyIntel;
+  roundMapping?: RoundMapping[];
 }
 
 const SKILL_CATEGORIES: SkillCategory[] = [
@@ -347,12 +364,90 @@ export function generateQuestions(skills: ExtractedSkills): string[] {
   return questions.slice(0, 10);
 }
 
+// --- Company Intel ---
+
+const ENTERPRISE_COMPANIES = [
+  "amazon", "google", "microsoft", "meta", "apple", "netflix", "infosys", "tcs",
+  "wipro", "cognizant", "accenture", "ibm", "oracle", "salesforce", "adobe",
+  "uber", "flipkart", "walmart", "deloitte", "capgemini", "hcl", "tech mahindra",
+  "mindtree", "mphasis", "l&t infotech", "persistent", "zoho", "paytm",
+  "swiggy", "zomato", "ola", "byju's", "samsung", "intel", "qualcomm",
+];
+
+const MIDSIZE_COMPANIES = [
+  "razorpay", "cred", "meesho", "groww", "zerodha", "postman", "freshworks",
+  "browserstack", "chargebee", "clevertap", "druva", "hasura", "unacademy",
+];
+
+function inferCompanySize(company: string): CompanySize {
+  const lower = company.toLowerCase().trim();
+  if (ENTERPRISE_COMPANIES.some(c => lower.includes(c))) return "Enterprise";
+  if (MIDSIZE_COMPANIES.some(c => lower.includes(c))) return "Mid-size";
+  return "Startup";
+}
+
+function inferIndustry(company: string, jdText: string): string {
+  const text = `${company} ${jdText}`.toLowerCase();
+  if (["fintech", "banking", "payment", "finance"].some(k => text.includes(k))) return "Financial Technology";
+  if (["health", "medical", "pharma"].some(k => text.includes(k))) return "Healthcare Technology";
+  if (["ecommerce", "e-commerce", "retail", "shopping"].some(k => text.includes(k))) return "E-Commerce";
+  if (["edtech", "education", "learning"].some(k => text.includes(k))) return "Education Technology";
+  if (["gaming", "game"].some(k => text.includes(k))) return "Gaming";
+  return "Technology Services";
+}
+
+function generateCompanyIntel(company: string, jdText: string): CompanyIntel | undefined {
+  if (!company.trim()) return undefined;
+  const size = inferCompanySize(company);
+  const hiringFocus = size === "Enterprise"
+    ? "Structured hiring: strong DSA fundamentals, core CS concepts, and consistent performance across multiple rounds."
+    : size === "Mid-size"
+    ? "Balanced hiring: practical coding ability, system awareness, and cultural alignment with a growing team."
+    : "Practical hiring: hands-on problem solving, depth in your tech stack, and ability to ship fast.";
+  return { name: company, industry: inferIndustry(company, jdText), size, hiringFocus };
+}
+
+// --- Round Mapping ---
+
+function generateRoundMapping(skills: ExtractedSkills, size: CompanySize): RoundMapping[] {
+  const allSkills = Object.values(skills).flat();
+  const has = (kw: string) => allSkills.some(s => s.toLowerCase().includes(kw.toLowerCase()));
+  const hasWeb = has("React") || has("Next.js") || has("Angular") || has("Vue") || has("Node.js");
+  const hasDSA = has("DSA") || has("Data Structures") || has("Algorithms");
+
+  if (size === "Enterprise") {
+    return [
+      { round: "Round 1", title: "Online Assessment (DSA + Aptitude)", why: "Enterprise companies filter large applicant pools with automated tests focusing on problem-solving speed and accuracy." },
+      { round: "Round 2", title: "Technical — DSA & Core CS", why: "Deep algorithmic thinking and CS fundamentals are key differentiators at scale-focused companies." },
+      { round: "Round 3", title: "Technical — Projects & Stack", why: "Interviewers validate that you can apply theory to real systems and articulate design decisions." },
+      { round: "Round 4", title: "HR & Managerial", why: "Cultural fit and communication skills determine long-term success within large, cross-functional teams." },
+    ];
+  }
+
+  if (size === "Mid-size") {
+    return [
+      { round: "Round 1", title: hasDSA ? "Coding Challenge (DSA-focused)" : "Take-home / Live Coding", why: "Mid-size companies assess practical coding ability with a balance of algorithmic and applied problems." },
+      { round: "Round 2", title: "Technical Deep-dive", why: "Expect questions on your stack, system design basics, and how you'd handle real production scenarios." },
+      { round: "Round 3", title: "Team & Culture Fit", why: "Smaller teams mean every hire matters — they want someone who collaborates well and aligns with company values." },
+    ];
+  }
+
+  // Startup
+  return [
+    { round: "Round 1", title: hasWeb ? "Practical Coding (Stack-specific)" : "Live Problem Solving", why: "Startups prioritize candidates who can contribute from day one with hands-on skills." },
+    { round: "Round 2", title: "System Discussion & Architecture", why: "You'll discuss how you'd build features end-to-end, showing ownership and technical breadth." },
+    { round: "Round 3", title: "Culture Fit & Founder Chat", why: "Startups hire for mindset — expect questions about ambiguity, ownership, and learning speed." },
+  ];
+}
+
 export function analyzeJD(company: string, role: string, jdText: string): AnalysisResult {
   const extractedSkills = extractSkills(jdText);
   const readinessScore = calculateReadinessScore(company, role, jdText, extractedSkills);
   const checklist = generateChecklist(extractedSkills);
   const plan = generatePlan(extractedSkills);
   const questions = generateQuestions(extractedSkills);
+  const companyIntel = generateCompanyIntel(company, jdText);
+  const roundMapping = generateRoundMapping(extractedSkills, companyIntel?.size ?? "Startup");
 
   return {
     id: crypto.randomUUID(),
@@ -365,6 +460,8 @@ export function analyzeJD(company: string, role: string, jdText: string): Analys
     checklist,
     questions,
     readinessScore,
+    companyIntel,
+    roundMapping,
   };
 }
 
