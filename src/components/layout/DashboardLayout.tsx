@@ -1,12 +1,12 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, BookOpen, ClipboardCheck, FolderOpen, User } from "lucide-react";
+import { LayoutDashboard, BookOpen, ClipboardCheck, FolderOpen, User, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "Practice", to: "/practice", icon: BookOpen },
-  { label: "Assessments", to: "/assessments", icon: ClipboardCheck },
-  { label: "Resources", to: "/resources", icon: FolderOpen },
+  { label: "JD Analyzer", to: "/assessments", icon: ClipboardCheck },
+  { label: "History", to: "/resources", icon: History },
   { label: "Profile", to: "/profile", icon: User },
 ];
 
