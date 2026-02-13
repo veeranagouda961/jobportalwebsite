@@ -23,16 +23,16 @@ interface TestItem {
 }
 
 const testItems: TestItem[] = [
-  { id: "prefs_persist", label: "Preferences persist after refresh", howToTest: "Go to /settings, save preferences, refresh the page, and confirm they're still there." },
-  { id: "match_score", label: "Match score calculates correctly", howToTest: "Set preferences, go to /dashboard, and verify score badges reflect your keywords, location, and skills." },
-  { id: "show_matches", label: '"Show only matches" toggle works', howToTest: "Enable the toggle on /dashboard and confirm only jobs above your threshold appear." },
-  { id: "save_persist", label: "Save job persists after refresh", howToTest: "Save a job on /dashboard, refresh, then check /saved to confirm it's still there." },
-  { id: "apply_tab", label: "Apply opens in new tab", howToTest: 'Click "Apply" on any job card and confirm the link opens in a new browser tab.' },
-  { id: "status_persist", label: "Status update persists after refresh", howToTest: 'Change a job status to "Applied", refresh the page, and confirm the status is retained.' },
-  { id: "status_filter", label: "Status filter works correctly", howToTest: 'Use the Status dropdown on /dashboard to filter by "Applied" and confirm only matching jobs show.' },
-  { id: "digest_top10", label: "Digest generates top 10 by score", howToTest: "Generate a digest on /digest and verify the list contains 10 jobs sorted by match score." },
-  { id: "digest_persist", label: "Digest persists for the day", howToTest: "Generate a digest, refresh the page, and confirm the same digest loads without regenerating." },
-  { id: "no_errors", label: "No console errors on main pages", howToTest: "Open browser DevTools, visit each page, and confirm no red errors appear in the Console tab." },
+  { id: "jd_required", label: "JD required validation works", howToTest: "Go to /assessments, leave the JD textarea empty, click Analyze, and confirm an error message appears." },
+  { id: "short_jd_warn", label: "Short JD warning shows for <200 chars", howToTest: "Type fewer than 200 characters in the JD textarea and confirm a warning about short JD appears." },
+  { id: "skills_group", label: "Skills extraction groups correctly", howToTest: "Paste a full JD mentioning React, Python, AWS, SQL. Check /results and confirm skills appear in correct categories (Web, Languages, Cloud, Data)." },
+  { id: "round_mapping", label: "Round mapping changes based on company + skills", howToTest: 'Analyze a JD with company "Amazon" → expect 4-round Enterprise flow. Then try an unknown company → expect 3-round Startup flow.' },
+  { id: "score_deterministic", label: "Score calculation is deterministic", howToTest: "Analyze the same JD twice with the same inputs and confirm the base readiness score is identical both times." },
+  { id: "skill_toggles", label: "Skill toggles update score live", howToTest: 'On /results, toggle a skill to "I know this" and confirm the readiness score increases by 2. Toggle it back and confirm it decreases.' },
+  { id: "persist_refresh", label: "Changes persist after refresh", howToTest: "Toggle some skills on /results, refresh the page, reopen the same entry from History, and confirm toggles and score are retained." },
+  { id: "history_saves", label: "History saves and loads correctly", howToTest: "Create 2–3 analyses, go to History (Resources), and confirm all entries load with correct company, role, and scores." },
+  { id: "export_buttons", label: "Export buttons copy the correct content", howToTest: 'Click "Copy 7-day plan", paste into a text editor, and confirm the plan text matches. Repeat for checklist and questions.' },
+  { id: "no_errors", label: "No console errors on core pages", howToTest: "Open browser DevTools, visit /assessments, /results, /resources, and /profile. Confirm no red errors appear in the Console tab." },
 ];
 
 /* ─── Step definitions ─── */
@@ -286,14 +286,20 @@ Core Features:
         </section>
 
         {/* ─── D) Submission Export ─── */}
-        <section className="rounded-lg border border-border bg-card p-space-3">
+        <section className={`rounded-lg border bg-card p-space-3 ${!allTestsPassed ? "border-border/50 opacity-60 pointer-events-none" : "border-border"}`}>
           <h2 className="text-lg font-serif text-foreground mb-space-2">Final Submission</h2>
+          {!allTestsPassed && (
+            <div className="flex items-center gap-2 mb-space-2 text-sm text-[hsl(40,60%,50%)]">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>Pass all 10 tests to unlock shipping.</span>
+            </div>
+          )}
           <pre className="text-xs text-muted-foreground bg-secondary/50 rounded-md p-space-2 whitespace-pre-wrap mb-space-2 border border-border">
             {submissionText}
           </pre>
           <Button
             onClick={copySubmission}
-            disabled={!allLinksValid}
+            disabled={!allLinksValid || !allTestsPassed}
             variant="outline"
             className="w-full"
           >
@@ -303,7 +309,7 @@ Core Features:
               <><Copy className="h-4 w-4" /> Copy Final Submission</>
             )}
           </Button>
-          {!allLinksValid && (
+          {allTestsPassed && !allLinksValid && (
             <p className="text-xs text-muted-foreground mt-2 text-center">
               Provide all 3 valid links to enable copy.
             </p>
