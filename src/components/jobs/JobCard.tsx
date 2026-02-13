@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Job } from "@/data/jobs";
 import { getScoreTier, type ScoreTier } from "@/lib/matchScore";
+import { type JobStatus, ALL_STATUSES } from "@/hooks/useJobStatus";
+import { useToast } from "@/hooks/use-toast";
 
 interface JobCardProps {
   job: Job;
@@ -10,6 +12,8 @@ interface JobCardProps {
   isSaved: boolean;
   onToggleSave: (id: number) => void;
   onView: (job: Job) => void;
+  status?: JobStatus;
+  onStatusChange?: (jobId: number, status: JobStatus) => void;
 }
 
 function postedLabel(days: number) {
@@ -31,8 +35,24 @@ const tierStyles: Record<ScoreTier, string> = {
   low: "bg-muted/60 text-muted-foreground",
 };
 
-export function JobCard({ job, matchScore, isSaved, onToggleSave, onView }: JobCardProps) {
+const statusStyles: Record<JobStatus, string> = {
+  "Not Applied": "bg-muted text-muted-foreground",
+  Applied: "bg-[hsl(210,60%,50%)] text-[hsl(40,18%,96%)]",
+  Rejected: "bg-destructive text-destructive-foreground",
+  Selected: "bg-[hsl(140,30%,42%)] text-[hsl(40,18%,96%)]",
+};
+
+export function JobCard({ job, matchScore, isSaved, onToggleSave, onView, status = "Not Applied", onStatusChange }: JobCardProps) {
   const tier = matchScore !== undefined ? getScoreTier(matchScore) : null;
+  const { toast } = useToast();
+
+  const handleStatusChange = (newStatus: JobStatus) => {
+    if (newStatus === status) return;
+    onStatusChange?.(job.id, newStatus);
+    if (newStatus !== "Not Applied") {
+      toast({ title: `Status updated: ${newStatus}` });
+    }
+  };
 
   return (
     <div className="rounded-lg border border-border bg-card p-space-3 transition-all duration-base ease-base hover:border-primary/30">
@@ -68,6 +88,23 @@ export function JobCard({ job, matchScore, isSaved, onToggleSave, onView }: JobC
       </div>
 
       <p className="mt-space-1 text-sm font-medium text-foreground">{job.salaryRange}</p>
+
+      {/* Status */}
+      {onStatusChange && (
+        <div className="mt-space-2 flex flex-wrap items-center gap-1.5">
+          {ALL_STATUSES.map((s) => (
+            <button
+              key={s}
+              onClick={() => handleStatusChange(s)}
+              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold transition-all duration-[180ms] ease-in-out ${
+                s === status ? statusStyles[s] : "bg-muted/40 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="mt-space-2 flex items-center gap-2">

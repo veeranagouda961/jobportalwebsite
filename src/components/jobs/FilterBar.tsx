@@ -16,6 +16,7 @@ export interface Filters {
   experience: string;
   source: string;
   sort: string;
+  status: string;
 }
 
 interface Props {
@@ -85,6 +86,19 @@ export function FilterBar({ filters, onChange, hasPreferences }: Props) {
           {allSources.map((s) => (
             <SelectItem key={s} value={s}>{s}</SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={filters.status} onValueChange={(v) => set("status", v)}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="Not Applied">Not Applied</SelectItem>
+          <SelectItem value="Applied">Applied</SelectItem>
+          <SelectItem value="Rejected">Rejected</SelectItem>
+          <SelectItem value="Selected">Selected</SelectItem>
         </SelectContent>
       </Select>
 
