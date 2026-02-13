@@ -9,6 +9,8 @@ import { Plus, Trash2, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResumePreviewPanel } from "@/components/resume/ResumePreviewPanel";
 import { ATSScorePanel } from "@/components/resume/ATSScorePanel";
+import { TemplateSelector } from "@/components/resume/TemplateSelector";
+import { BulletHints } from "@/components/resume/BulletHints";
 
 function genId() {
   return Math.random().toString(36).slice(2, 9);
@@ -205,6 +207,7 @@ const Builder = () => {
               <div className="space-y-1">
                 <Label className="text-xs">Description</Label>
                 <Textarea value={exp.description} onChange={(e) => updateExperience(exp.id, "description", e.target.value)} placeholder="Key achievements and responsibilities..." className="min-h-[80px] resize-y" />
+                <BulletHints text={exp.description} />
               </div>
             </div>
           ))}
@@ -237,6 +240,7 @@ const Builder = () => {
               <div className="space-y-1">
                 <Label className="text-xs">Description</Label>
                 <Textarea value={proj.description} onChange={(e) => updateProject(proj.id, "description", e.target.value)} placeholder="What it does..." className="min-h-[60px] resize-y" />
+                <BulletHints text={proj.description} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Tech Stack</Label>
@@ -286,7 +290,10 @@ const Builder = () => {
         <div className="p-space-3 space-y-space-3">
           <ATSScorePanel />
           <div>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-space-2">Live Preview</h3>
+            <div className="flex items-center justify-between mb-space-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Live Preview</h3>
+              <TemplateSelector />
+            </div>
             <ResumePreviewPanel />
           </div>
         </div>
