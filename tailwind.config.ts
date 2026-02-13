@@ -19,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        serif: ["'DM Serif Display'", "serif"],
-        sans: ["'DM Sans'", "sans-serif"],
+        serif: ["'Playfair Display'", "serif"],
+        sans: ["'Inter'", "sans-serif"],
       },
       spacing: {
         "space-1": "8px",
