@@ -6,6 +6,13 @@ import { Clock, ArrowRight } from "lucide-react";
 
 const Resources = () => {
   const history = getHistory();
+  const rawCount = (() => {
+    try {
+      const raw = localStorage.getItem("jd-analysis-history");
+      return raw ? JSON.parse(raw).length : 0;
+    } catch { return 0; }
+  })();
+  const corruptedCount = rawCount - history.length;
 
   return (
     <div>
@@ -13,6 +20,12 @@ const Resources = () => {
       <p className="mt-space-1 text-muted-foreground max-w-prose">
         All your past JD analyses, saved locally and available offline.
       </p>
+
+      {corruptedCount > 0 && (
+        <p className="mt-space-2 text-sm text-destructive/80">
+          {corruptedCount} saved {corruptedCount === 1 ? "entry" : "entries"} couldn't be loaded. Create a new analysis.
+        </p>
+      )}
 
       {history.length === 0 ? (
         <Card className="mt-space-3">
