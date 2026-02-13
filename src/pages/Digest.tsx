@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { jobs } from "@/data/jobs";
 import { usePreferences } from "@/hooks/usePreferences";
+import { useJobStatus, type JobStatus } from "@/hooks/useJobStatus";
 import { computeMatchScore, getScoreTier, type ScoreTier } from "@/lib/matchScore";
 import { useToast } from "@/hooks/use-toast";
 
@@ -79,8 +80,16 @@ const tierStyles: Record<ScoreTier, string> = {
   low: "bg-muted/60 text-muted-foreground",
 };
 
+const statusBadgeStyles: Record<JobStatus, string> = {
+  "Not Applied": "bg-muted text-muted-foreground",
+  Applied: "bg-[hsl(210,60%,50%)] text-[hsl(40,18%,96%)]",
+  Rejected: "bg-destructive text-destructive-foreground",
+  Selected: "bg-[hsl(140,30%,42%)] text-[hsl(40,18%,96%)]",
+};
+
 const Digest = () => {
   const { prefs, hasPreferences } = usePreferences();
+  const { getRecentUpdates } = useJobStatus();
   const { toast } = useToast();
   const today = todayKey();
 
@@ -255,6 +264,37 @@ const Digest = () => {
           </Button>
         </div>
       )}
+
+      {/* Recent Status Updates */}
+      {(() => {
+        const updates = getRecentUpdates();
+        if (updates.length === 0) return null;
+        return (
+          <div className="mt-space-3 rounded-lg border border-border bg-card p-space-3">
+            <h2 className="text-lg font-serif text-foreground">Recent Status Updates</h2>
+            <ul className="mt-space-2 space-y-space-1">
+              {updates.slice(0, 10).map((u) => {
+                const job = jobs.find((j) => j.id === u.jobId);
+                if (!job) return null;
+                return (
+                  <li key={u.jobId} className="flex items-center justify-between gap-2 text-sm">
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium text-foreground">{job.title}</span>
+                      <span className="text-muted-foreground"> at {job.company}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge className={statusBadgeStyles[u.status]}>{u.status}</Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(u.date).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })()}
 
       {/* Regenerate + demo note */}
       <div className="mt-space-3 flex items-center justify-between">
