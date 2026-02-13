@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, Trash2, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ResumePreviewPanel } from "@/components/resume/ResumePreviewPanel";
+import { ATSScorePanel } from "@/components/resume/ATSScorePanel";
 
 function genId() {
   return Math.random().toString(36).slice(2, 9);
@@ -282,9 +283,12 @@ const Builder = () => {
 
       {/* Right: Live Preview */}
       <div className="w-[45%] min-w-[360px] border-l border-border bg-card overflow-y-auto hidden lg:block">
-        <div className="p-space-3">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-space-2">Live Preview</h3>
-          <ResumePreviewPanel />
+        <div className="p-space-3 space-y-space-3">
+          <ATSScorePanel />
+          <div>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-space-2">Live Preview</h3>
+            <ResumePreviewPanel />
+          </div>
         </div>
       </div>
     </div>
