@@ -92,11 +92,12 @@ const Results = () => {
 
   const liveScore = useMemo(() => {
     if (!result) return 0;
-    let score = result.readinessScore;
+    const base = result.baseScore ?? result.readinessScore;
+    let score = base;
     for (const skill of allSkills) {
-      const status = confidenceMap[skill];
+      const status = confidenceMap[skill] ?? "practice";
       if (status === "know") score += 2;
-      else score -= 2; // default is "practice"
+      else score -= 2;
     }
     return Math.max(0, Math.min(100, score));
   }, [result, allSkills, confidenceMap]);
@@ -109,13 +110,24 @@ const Results = () => {
     if (!result) return;
     const current = confidenceMap[skill] ?? "practice";
     const next = current === "know" ? "practice" : "know";
+    const newMap: Record<string, "know" | "practice"> = { ...confidenceMap, [skill]: next };
+    // Recalculate finalScore
+    const base = result.baseScore ?? result.readinessScore;
+    let fs = base;
+    for (const s of allSkills) {
+      const st = newMap[s] ?? "practice";
+      if (st === "know") fs += 2; else fs -= 2;
+    }
+    fs = Math.max(0, Math.min(100, fs));
     const updated: AnalysisResult = {
       ...result,
-      skillConfidenceMap: { ...confidenceMap, [skill]: next },
+      skillConfidenceMap: newMap,
+      finalScore: fs,
+      updatedAt: new Date().toISOString(),
     };
     setResult(updated);
     updateAnalysis(updated);
-  }, [result, confidenceMap]);
+  }, [result, confidenceMap, allSkills]);
 
   const downloadTxt = useCallback(() => {
     if (!result) return;

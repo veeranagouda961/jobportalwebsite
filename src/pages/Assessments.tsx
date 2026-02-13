@@ -15,6 +15,8 @@ const Assessments = () => {
   const [jdText, setJdText] = useState("");
   const [error, setError] = useState("");
 
+  const isShortJd = jdText.trim().length > 0 && jdText.trim().length < 200;
+
   const handleAnalyze = () => {
     if (!jdText.trim()) {
       setError("Please paste a job description to analyze.");
@@ -72,6 +74,12 @@ const Assessments = () => {
               {jdText.length} characters {jdText.length > 800 && "✓ Good length for accurate analysis"}
             </p>
           </div>
+
+          {isShortJd && (
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              This JD is too short to analyze deeply. Paste full JD for better output.
+            </p>
+          )}
 
           {error && (
             <p className="text-sm text-destructive">{error}</p>

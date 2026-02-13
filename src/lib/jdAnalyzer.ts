@@ -36,6 +36,7 @@ export interface RoundMapping {
 export interface AnalysisResult {
   id: string;
   createdAt: string;
+  updatedAt: string;
   company: string;
   role: string;
   jdText: string;
@@ -44,7 +45,9 @@ export interface AnalysisResult {
   checklist: ChecklistRound[];
   questions: string[];
   readinessScore: number;
-  skillConfidenceMap?: Record<string, "know" | "practice">;
+  baseScore: number;
+  finalScore: number;
+  skillConfidenceMap: Record<string, "know" | "practice">;
   companyIntel?: CompanyIntel;
   roundMapping?: RoundMapping[];
 }
@@ -448,10 +451,19 @@ export function analyzeJD(company: string, role: string, jdText: string): Analys
   const questions = generateQuestions(extractedSkills);
   const companyIntel = generateCompanyIntel(company, jdText);
   const roundMapping = generateRoundMapping(extractedSkills, companyIntel?.size ?? "Startup");
+  const now = new Date().toISOString();
+
+  // Initialize all skills as "practice" by default
+  const allSkills = Object.values(extractedSkills).flat();
+  const skillConfidenceMap: Record<string, "know" | "practice"> = {};
+  for (const skill of allSkills) {
+    skillConfidenceMap[skill] = "practice";
+  }
 
   return {
     id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
     company,
     role,
     jdText,
@@ -460,6 +472,9 @@ export function analyzeJD(company: string, role: string, jdText: string): Analys
     checklist,
     questions,
     readinessScore,
+    baseScore: readinessScore,
+    finalScore: readinessScore,
+    skillConfidenceMap,
     companyIntel,
     roundMapping,
   };
@@ -477,7 +492,30 @@ export function saveAnalysis(result: AnalysisResult): void {
 export function getHistory(): AnalysisResult[] {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Filter out corrupted entries and migrate legacy ones
+    return parsed.filter((entry: any) => {
+      try {
+        return entry && typeof entry.id === "string" && typeof entry.jdText === "string";
+      } catch {
+        return false;
+      }
+    }).map((entry: any): AnalysisResult => ({
+      ...entry,
+      company: entry.company ?? "",
+      role: entry.role ?? "",
+      updatedAt: entry.updatedAt ?? entry.createdAt ?? new Date().toISOString(),
+      baseScore: entry.baseScore ?? entry.readinessScore ?? 35,
+      finalScore: entry.finalScore ?? entry.readinessScore ?? 35,
+      skillConfidenceMap: entry.skillConfidenceMap ?? {},
+      extractedSkills: entry.extractedSkills ?? { General: ["General fresher stack"] },
+      plan: entry.plan ?? [],
+      checklist: entry.checklist ?? [],
+      questions: entry.questions ?? [],
+      readinessScore: entry.readinessScore ?? 35,
+    }));
   } catch {
     return [];
   }
